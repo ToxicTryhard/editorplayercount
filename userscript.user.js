@@ -426,7 +426,7 @@ function addChatMessage(username, content){
 
         const message_content = addDivChild(message_container, "chat_message_content_" + message_id, "pc_stat pc_message_element", null, "span");
 
-        const regex_link = /(?:(?:https?|http):\/\/)?[\w/\-?=%.]+\.[\w/\-&?=%.#]+/gi;
+        const regex_link = /(?:(?:https?|http):\/\/)?[\w/\-?=%.]+\.[\w/\-&?=%#]+/gi;
         const regex_https = /(https|http):\/\//gi;
         const texts = content.split(regex_link);
         const links = content.match(regex_link);

@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Editor Playercount Display
-// @version      1.0.1
+// @version      1.0
 // @description  Display count and usernames of all online players with this extension in the krunker editor
 // @author       ProfessionalNoob
 // @match        https://krunker.io/editor.html
@@ -23,7 +23,8 @@ const CONFIG = {
 const DATA = {
     user: {
         logged_in: false,
-        username: null
+        username: null,
+        pfp_id: -1
     },
     playerdata: {
         official_count: 0,
@@ -374,7 +375,8 @@ function getInitMessage(){
     return JSON.stringify({
         header: "init",
         logged_in: DATA.user.logged_in,
-        username: DATA.user.username
+        username: DATA.user.username,
+        pfp_id: DATA.user.pfp_id
     });
 }
 
@@ -389,6 +391,19 @@ function sendPlayerdata(){
     }else if(KE.account){
         DATA.user.logged_in = true;
         DATA.user.username = KE.account.name;
+
+        let score = 0;
+        let pfp = DATA.user.pfp_id;
+        for (const [key, value] of Object.entries(KE.account.stats)){
+            if(key[0] == "c" && !isNaN(key.substring(1))){
+                if(value > score){
+                    score = value;
+                    pfp = key.substring(1);
+                }
+            }
+        }
+        DATA.user.pfp_id = pfp;
+
         DATA.ws.send(getInitMessage());
 
         clearInterval(DATA.register_interval);

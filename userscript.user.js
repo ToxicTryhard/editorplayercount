@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Editor Playercount Display
-// @version      1.2.0
+// @version      1.3.0
 // @description  Display count and usernames of all online players with this extension in the krunker editor
 // @author       ProfessionalNoob
 // @match        https://krunker.io/editor.html
@@ -50,10 +50,73 @@ const css = `
     column-gap: 4px;
 }
 
-#pc_chat_container{
+#pc_chat_elements{
     position: absolute;
     bottom: 0px;
+}
+
+#pc_chat_collapse{
+   opacity: 0%;
+   transition: opacity 200ms ease-in-out;
+   padding: 10px 10px 0px 10px;
+}
+
+#pc_chat_collapse_toggle{
+    visibility: hidden;
+    position: absolute;
+}
+
+#pc_chat_collapse_label{
+    margin: 0;
+    display: block;
+    user-select: none;
+}
+
+#pc_chat_collapse_icon{
+    height: 100%;
+    background-color: #ddd;
+    mask: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjU2IiBoZWlnaHQ9IjI1NiIgdmlld0JveD0iMCAwIDI1NiAyNTYiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxwYXRoIGQ9Ik00Ni42Nzc3IDk3Ljk5MUwxMjguMzQ5IDE3OS42NjJMMjEwLjAxOSA5Ny45OTFMMjI3LjY5NyAxMTUuNjY5TDEyOC4zNDkgMjE1LjAxN0wyOSAxMTUuNjY5TDQ2LjY3NzcgOTcuOTkxWk00Ni42Nzc3IDQwTDEyOC4zNDkgMTIxLjY3MUwyMTAuMDE5IDQwTDIyNy42OTcgNTcuNjc3N0wxMjguMzQ5IDE1Ny4wMjZMMjkgNTcuNjc3N0w0Ni42Nzc3IDQwWiIgZmlsbD0iI2RkZCIgZmlsbC1vcGFjaXR5PSIwLjciLz4KPC9zdmc+Cg==');
+    mask-repeat: no-repeat;
+    mask-position: center;
+    mask-size: contain;
+}
+
+#pc_chat_collapse_icon:hover{
+    background-color: #fff;
+}
+
+#pc_chat_extras_container{
+    display: grid;
+    grid-template-columns: 1fr max-content;
+    gap: 10px;
+}
+
+#pc_chat_container{
     width: 400px;
+}
+
+#pc_chat_elements:hover > #pc_chat_collapse{
+    opacity: 100%;
+}
+
+#pc_chat_elements:has( #pc_chat_collapse_toggle:checked) #pc_chat_collapse_icon{
+   transform: rotate(180deg);
+}
+
+#pc_chat_elements:has( #pc_chat_collapse_toggle:checked) #pc_chat_message_container > :not(:last-child){
+   display: none;
+}
+
+#pc_chat_send_map{
+    margin: 0px;
+}
+
+#pc_chat_send_map_text{
+    color: #ddd;
+}
+
+#pc_chat_send_map_text:hover{
+    color: #fff;
 }
 
 #pc_chat_message_container{
@@ -87,6 +150,21 @@ const css = `
     color: #ddd;
     text-align: left;
     user-select: none;
+}
+
+.pc_chat_map_button{
+    width: fit-content;
+    display: inline-block;
+    margin: 0px;
+    height: 100%;
+    background-color: rgba(100, 100, 100, 0.5);
+    color: #ddd;
+    border: 0;
+}
+
+.pc_chat_map_button:hover{
+    background-color: rgba(100, 100, 100, 0.5);
+    color: #fff;
 }
 
 [id^=chat_message_content_] > * {
@@ -431,6 +509,31 @@ function updatePCDisplay(){
     }
 }
 
+function addMapMessage(username, data){
+    const chat_message_container = document.getElementById("pc_chat_message_container");
+    if(chat_message_container){
+        const message_id = DATA.chat_message_count;
+        const message_container = addDivChild(chat_message_container, "chat_message_" + message_id, null, null);
+        const message_user = addDivChild(message_container, "chat_message_user_" + message_id, "pc_statTitle pc_message_element", null, "span");
+        message_user.innerText = username + " shared a map ";
+
+        const message_button = addDivChild(message_container, "chat_message_map_" + message_id, "eButton pc_chat_map_button", null, "button");
+        message_button.innerText = "Load Map";
+
+        message_button.onclick = function(){
+            KE.importMap(data);
+        };
+
+        while(chat_message_container.children.length > CONFIG.max_chat_messages){
+            chat_message_container.children[0].remove();
+        }
+
+        chat_message_container.scrollTop = chat_message_container.scrollHeight;
+
+        DATA.chat_message_count++;
+    }
+}
+
 function addChatMessage(username, content){
     const chat_message_container = document.getElementById("pc_chat_message_container");
     if(chat_message_container){
@@ -491,6 +594,8 @@ function parseMessage(messageEvent){
         case "recovery":
             message.messages.forEach((msg) => addChatMessage(msg.username, msg.message));
             break;
+        case "map":
+            addMapMessage(message.username, message.data);
     }
 }
 
@@ -542,6 +647,19 @@ function sendChatMessage(content){
     }
 }
 
+function sendMap(){
+    if(DATA.ws){
+        DATA.ws.send(
+            JSON.stringify({
+                header: "map",
+                data: KE.getMapExport()
+            })
+        );
+    }
+}
+
+unsafeWindow.sendMap = sendMap;
+
 function createUI(center_div){
     // playercount
     const grid_container = addDivChild(center_div, "pc_grid_container", null, null);
@@ -555,7 +673,6 @@ function createUI(center_div){
     addDivChild(playercount_container, "pc_logged_title", "pc_statTitle", "Logged in:");
     addDivChild(playercount_container, "pc_logged_stat", "pc_stat", "0 / 0");
     addDivChild(playercount_container, "pc_playerContainer", null, null);
-
 
     // Three
     const map_container = addDivChild(grid_container, "pc_playerMap", null, null);
@@ -584,9 +701,27 @@ function createUI(center_div){
 
     // chatbox
     document.getElementById("canvasObjEdit").remove();
-    const chat_container = addDivChild(center_div, "pc_chat_container", "pc_box_style", null);
+
+
+    const chat_elements = addDivChild(center_div, "pc_chat_elements", null, null);
+    const chat_collapse = addDivChild(chat_elements, "pc_chat_collapse", null, null);
+    const chat_container = addDivChild(chat_elements, "pc_chat_container", "pc_box_style", null);
     const chat_message_container = addDivChild(chat_container, "pc_chat_message_container", null, null);
     const chat_input = addDivChild(chat_container, "pc_chat_input", "inlineInput", null, "input");
+    const chat_collapse_toggle = addDivChild(chat_collapse, "pc_chat_collapse_toggle", null, null, "input");
+    const chat_extras_container = addDivChild(chat_collapse, "pc_chat_extras_container", null, null);
+    const chat_collapse_label = addDivChild(chat_extras_container, "pc_chat_collapse_label", "pc_box_style", null, "label");
+    const chat_collapse_icon = addDivChild(chat_collapse_label, "pc_chat_collapse_icon", null, null);
+    chat_collapse_toggle.type = "checkbox";
+    chat_collapse_label.htmlFor = "pc_chat_collapse_toggle";
+    chat_collapse_toggle.onchange = (e) => {
+        chat_message_container.scrollTop = chat_message_container.scrollHeight;
+    };
+
+    const chat_send_map = addDivChild(chat_extras_container, "pc_chat_send_map", "pc_box_style", null);
+    const chat_send_map_text = addDivChild(chat_send_map, "pc_chat_send_map_text", "pc_stat", null);
+    chat_send_map_text.innerText = "Send Map";
+    chat_send_map_text.onclick = sendMap;
 
     chat_input.maxLength = CONFIG.max_message_length;
     chat_input.onkeydown = function(e){

@@ -1,11 +1,11 @@
 // ==UserScript==
 // @name         Editor Playercount Display
-// @version      1.0.2
+// @version      1.1
 // @description  Display count and usernames of all online players with this extension in the krunker editor
 // @author       ProfessionalNoob
 // @match        https://krunker.io/editor.html
-// @updateURL    https://github.com/ToxicTryhard/editorplayercount/raw/main/userscript.user.js
-// @downloadURL  https://github.com/ToxicTryhard/editorplayercount/raw/main/userscript.user.js
+// @updateURL    https://github.com/ToxicTryhard/editorplayercount/raw/refs/heads/main/userscript.user.js
+// @downloadURL  https://github.com/ToxicTryhard/editorplayercount/raw/refs/heads/main/userscript.user.js
 // @supportURL   https://discord.gg/bz8abvq
 // @grant        unsafeWindow
 // ==/UserScript==

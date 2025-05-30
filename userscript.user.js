@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Editor Playercount Display
-// @version      1.0
+// @version      1.0.2
 // @description  Display count and usernames of all online players with this extension in the krunker editor
 // @author       ProfessionalNoob
 // @match        https://krunker.io/editor.html

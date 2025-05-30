@@ -398,7 +398,7 @@ function sendPlayerdata(){
             if(key[0] == "c" && !isNaN(key.substring(1))){
                 if(value > score){
                     score = value;
-                    pfp = key.substring(1);
+                    pfp = Number(key.substring(1));
                 }
             }
         }
